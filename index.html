@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Калькулятор орієнтовної вартості розробки сайту та мобільного застосунку.">
+  <title>Калькулятор вартості розробки</title>
+  <style>
+    :root {
+      --ink: #142630;
+      --navy: #173b50;
+      --navy-2: #20566f;
+      --pale: #eff4f7;
+      --line: #d7e2e8;
+      --muted: #5f717b;
+      --white: #fff;
+      --accent: #e8b44f;
+      --shadow: 0 18px 50px rgba(23,59,80,.12);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: linear-gradient(180deg,#f7fafb 0,#eef4f6 100%);
+      font: 16px/1.5 Arial, Helvetica, sans-serif;
+    }
+    button, input { font: inherit; }
+    .hero {
+      background: var(--navy);
+      color: var(--white);
+      padding: 44px 20px 86px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 360px;
+      height: 360px;
+      right: -90px;
+      top: -180px;
+      border: 52px solid rgba(255,255,255,.06);
+      border-radius: 50%;
+    }
+    .hero-inner, .layout { max-width: 1180px; margin: 0 auto; }
+    .eyebrow { letter-spacing: .12em; text-transform: uppercase; font-size: 12px; font-weight: 700; color: #bad1dc; }
+    h1 { margin: 10px 0 10px; max-width: 760px; font-size: clamp(34px,5vw,58px); line-height: 1.05; letter-spacing: -.035em; }
+    .hero p { max-width: 680px; margin: 0; color: #d8e7ed; font-size: 18px; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 26px;
+      align-items: start;
+      padding: 0 20px 64px;
+      margin-top: -52px;
+      position: relative;
+      z-index: 2;
+    }
+    .panel, .summary {
+      background: var(--white);
+      border: 1px solid rgba(23,59,80,.08);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .panel { padding: 30px; }
+    .summary { padding: 26px; position: sticky; top: 20px; }
+    .step + .step { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 30px; }
+    .step-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    .num { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: 50%; color: var(--white); background: var(--navy); font-weight: 700; }
+    h2, h3 { margin: 0; line-height: 1.2; }
+    h2 { font-size: 24px; }
+    h3 { font-size: 18px; }
+    .hint { margin: 5px 0 0; color: var(--muted); font-size: 14px; }
+    .choices { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+    .choice { position: relative; }
+    .choice input { position: absolute; opacity: 0; pointer-events: none; }
+    .choice label {
+      display: flex;
+      flex-direction: column;
+      min-height: 92px;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: .18s ease;
+      background: #fff;
+    }
+    .choice label:hover { border-color: #8aabb9; transform: translateY(-1px); }
+    .choice input:focus-visible + label { outline: 3px solid rgba(32,86,111,.22); outline-offset: 2px; }
+    .choice input:checked + label { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); background: var(--pale); }
+    .choice-title { font-weight: 700; line-height: 1.25; }
+    .choice-price { margin-top: auto; padding-top: 8px; color: var(--navy-2); font-weight: 700; }
+    .addons { display: grid; gap: 8px; }
+    .addon {
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      cursor: pointer;
+    }
+    .addon:hover { background: #f8fbfc; }
+    .addon input { width: 18px; height: 18px; accent-color: var(--navy); }
+    .addon-price { font-weight: 700; color: var(--navy); white-space: nowrap; }
+    .subgroup { margin: 22px 0 10px; font-weight: 700; color: var(--navy); }
+    .quantity-row {
+      display: grid;
+      grid-template-columns: 1fr 120px;
+      gap: 14px;
+      align-items: center;
+      margin-top: 10px;
+      padding: 14px;
+      background: var(--pale);
+      border-radius: 11px;
+    }
+    .quantity-row input { width: 100%; padding: 10px; border: 1px solid #abc0ca; border-radius: 8px; }
+    .summary-kicker { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; }
+    .total { margin: 7px 0 0; font-size: clamp(34px,4vw,45px); line-height: 1; font-weight: 800; letter-spacing: -.04em; color: var(--navy); }
+    .total small { font-size: 17px; letter-spacing: 0; }
+    .uah-total { margin-top: 8px; font-weight: 700; color: var(--navy-2); }
+    .monthly { margin-top: 16px; padding: 13px; border-radius: 10px; background: var(--pale); }
+    .monthly strong { display: block; font-size: 20px; color: var(--navy); }
+    .breakdown { margin: 20px 0; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+    .breakdown li { display: flex; gap: 12px; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    .breakdown span:last-child { white-space: nowrap; font-weight: 700; }
+    .empty { color: var(--muted); }
+    .notice { padding: 13px; border-left: 3px solid var(--accent); background: #fff9eb; color: #68501f; font-size: 13px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 18px; }
+    .btn { border: 0; border-radius: 10px; padding: 12px 10px; cursor: pointer; font-weight: 700; }
+    .btn-primary { color: #fff; background: var(--navy); }
+    .btn-secondary { color: var(--navy); background: var(--pale); }
+    .btn:hover { filter: brightness(.96); }
+    .reset { margin-top: 10px; width: 100%; color: var(--muted); background: transparent; border: 0; cursor: pointer; font-size: 13px; }
+    .footer { max-width: 1180px; margin: 0 auto; padding: 0 20px 40px; color: var(--muted); font-size: 13px; }
+    .price-list { max-width: 1180px; margin: 0 auto; padding: 8px 20px 70px; }
+    .price-list-head { max-width: 760px; margin: 0 0 26px; }
+    .price-list-head h2 { font-size: clamp(30px,4vw,44px); letter-spacing: -.03em; }
+    .price-list-head p { color: var(--muted); font-size: 17px; }
+    .price-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+    .price-nav a { padding: 8px 12px; border: 1px solid #b9cbd4; border-radius: 999px; color: var(--navy); text-decoration: none; font-size: 14px; background: #fff; }
+    .price-section { margin-top: 26px; padding: 28px; border-radius: 18px; background: #fff; border: 1px solid rgba(23,59,80,.08); box-shadow: 0 10px 34px rgba(23,59,80,.07); }
+    .price-section > h3 { margin-bottom: 6px; font-size: 25px; }
+    .section-note { margin: 0 0 20px; color: var(--muted); }
+    .service-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .service-card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+    .service-card h4 { margin: 0 0 4px; font-size: 18px; }
+    .service-card .price { color: var(--navy); font-size: 20px; font-weight: 800; }
+    .service-card p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+    .price-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    .price-table th { padding: 12px 14px; text-align: left; color: #fff; background: var(--navy); font-size: 14px; }
+    .price-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .price-table tbody tr:nth-child(odd) { background: var(--pale); }
+    .price-table td:last-child { width: 150px; font-weight: 800; color: var(--navy); white-space: nowrap; }
+    .conditions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+    .condition { padding: 16px; border-left: 3px solid var(--navy); background: var(--pale); }
+    .condition strong { display: block; margin-bottom: 5px; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%,20px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 999px; color: #fff; background: var(--navy); transition: .2s; z-index: 10; }
+    .toast.show { transform: translate(-50%,0); opacity: 1; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .summary { position: static; }
+    }
+    @media (max-width: 600px) {
+      .hero { padding-top: 32px; }
+      .layout { padding-inline: 12px; }
+      .panel, .summary { padding: 20px; border-radius: 14px; }
+      .choices { grid-template-columns: 1fr; }
+      .service-grid, .conditions { grid-template-columns: 1fr; }
+      .price-section { padding: 20px; }
+      .price-table { font-size: 14px; }
+      .price-table th, .price-table td { padding: 10px 8px; }
+      .choice label { min-height: 80px; }
+      .actions { grid-template-columns: 1fr; }
+      h1 { font-size: 38px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .hero { padding: 24px; }
+      .layout { display: block; margin: 0; padding: 20px; }
+      .panel { display: none; }
+      .summary { box-shadow: none; border: 1px solid #bbb; }
+      .actions, .reset { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">Попередній розрахунок для клієнта</div>
+      <h1>Калькулятор вартості розробки</h1>
+      <p>Оберіть потрібний формат і функції. Калькулятор покаже стартову вартість за чинним прайсом.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+    <form class="panel" id="calculator">
+      <section class="step">
+        <div class="step-head"><span class="num">1</span><div><h2>Формат співпраці</h2><p class="hint">Повна оплата або оренда з меншим стартовим платежем.</p></div></div>
+        <div class="choices" id="modeChoices">
+          <div class="choice"><input type="radio" name="mode" id="mode-buy" value="buy" checked><label for="mode-buy"><span class="choice-title">Купівля</span><span class="choice-price">Одноразова оплата</span></label></div>
+          <div class="choice"><input type="radio" name="mode" id="mode-rent" value="rent"><label for="mode-rent"><span class="choice-title">Оренда</span><span class="choice-price">Запуск + оплата щомісяця</span></label></div>
+        </div>
+      </section>
+      <section class="step">
+        <div class="step-head"><span class="num">2</span><div><h2>Сайт</h2><p class="hint">Оберіть один формат або залиште «Не потрібен».</p></div></div>
+        <div class="choices" id="siteChoices"></div>
+      </section>
+      <section class="step">
+        <div class="step-head"><span class="num">3</span><div><h2>Мобільний застосунок</h2><p class="hint">Можна додати до сайту або замовити окремо.</p></div></div>
+        <div class="choices" id="appChoices"></div>
+      </section>
+      <section class="step" id="accountStep">
+        <div class="step-head"><span class="num">4</span><div><h2>Особистий кабінет</h2><p class="hint">Оберіть рівень кабінету або залиште «Не потрібен».</p></div></div>
+        <div class="choices" id="accountChoices"></div>
+      </section>
+      <section class="step" id="extrasStep">
+        <div class="step-head"><span class="num">5</span><div><h2>Інтеграції та додаткові роботи</h2><p class="hint">Виберіть усе, що потрібно для запуску.</p></div></div>
+        <div id="webAddonGroup"><div class="subgroup">Для сайту</div><div class="addons" id="webAddons"></div></div>
+        <div id="appAddonGroup"><div class="subgroup">Для мобільного застосунку</div><div class="addons" id="appAddons"></div></div>
+      </section>
+      <section class="step" id="contentStep">
+        <div class="step-head"><span class="num">6</span><div><h2>Товари, наповнення та SEO</h2><p class="hint">Поштучні, погодинні та щомісячні послуги з прайса.</p></div></div>
+        <div class="subgroup">Товари та контент</div>
+        <div class="quantity-row"><label for="products"><strong>Ручне оформлення товарів</strong><br><span class="hint">$1.50 за товар</span></label><input id="products" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+        <div class="quantity-row"><label for="imports"><strong>Імпорт з готової бази</strong><br><span class="hint">від 10 грн за товар</span></label><input id="imports" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+        <div class="quantity-row"><label for="extraHours"><strong>Додаткова робота</strong><br><span class="hint">$15–20 за годину</span></label><input id="extraHours" type="number" min="0" step="1" value="0" inputmode="numeric"></div>
+        <div class="subgroup">Послуги за погодженням</div>
+        <div class="addons" id="estimateAddons"></div>
+        <div class="subgroup">Щомісячне наповнення</div>
+        <label class="addon"><input id="monthlyContent" type="checkbox"><span><strong>Наповнення сайту</strong><br><span class="hint">Готові тексти, зображення, сторінки, товари або матеріали</span></span><span class="addon-price">$40–150/міс.</span></label>
+      </section>
+      <section class="step">
+        <div class="step-head"><span class="num">7</span><div><h2>Супровід</h2><p class="hint">Щомісячні послуги рахуються окремо.</p></div></div>
+        <div class="choices" id="supportChoices"></div>
+        <div class="subgroup">Терміновість</div>
+        <label class="addon"><input id="urgent" type="checkbox"><span><strong>Термінове виконання</strong><br><span class="hint">Коефіцієнт ×2 до разових робіт</span></span><span class="addon-price">×2</span></label>
+      </section>
+    </form>
+
+    <aside class="summary" aria-live="polite">
+      <div class="summary-kicker" id="summaryKicker">Орієнтовна вартість від</div>
+      <div class="total" id="total">$0</div>
+      <div class="uah-total" id="uahTotal" hidden></div>
+      <div class="monthly" id="monthly" hidden><span>Щомісячний супровід</span><strong id="monthlyValue"></strong></div>
+      <ul class="breakdown" id="breakdown"></ul>
+      <div class="notice" id="summaryNotice">Це попередній розрахунок. Остаточна вартість визначається після узгодження ТЗ. Домен, хостинг, платні модулі, комісії та збори Google Play і Apple оплачуються окремо. WebView-застосунок може не пройти перевірку магазину.</div>
+      <div class="actions"><button class="btn btn-primary" id="copy" type="button">Скопіювати</button><button class="btn btn-secondary" type="button" onclick="window.print()">Друкувати</button></div>
+      <button class="reset" id="reset" type="button">Скинути розрахунок</button>
+    </aside>
+  </main>
+  <section class="price-list" id="price-list">
+    <div class="price-list-head">
+      <div class="eyebrow" style="color:var(--navy-2)">Детальний перелік послуг</div>
+      <h2>Повний прайс</h2>
+      <p>Початкові ціни з чинного прайса. Точний склад, обсяг і результат кожної роботи погоджуються в технічному завданні.</p>
+    </div>
+    <nav class="price-nav" aria-label="Розділи прайса">
+      <a href="#websites" data-price-mode="buy" data-project="site">Сайти</a><a href="#accounts" data-price-mode="buy" data-project="site">Особисті кабінети</a><a href="#integrations" data-price-mode="buy" data-project="site">Інтеграції</a><a href="#products-price" data-price-mode="buy" data-project="site">Товари</a><a href="#support">Супровід</a><a href="#mobile" data-price-mode="buy" data-project="app">Застосунки</a><a href="#rental" data-price-mode="rent">Оренда</a><a href="#terms">Умови</a>
+    </nav>
+
+    <article class="price-section" id="websites" data-price-mode="buy" data-project="site">
+      <h3>Розробка сайтів</h3>
+      <p class="section-note">Адаптивне відображення, погоджений стиль, базова навігація, розміщення готових матеріалів і перевірка основних сценаріїв.</p>
+      <div class="service-grid">
+        <div class="service-card"><h4>Лендинг</h4><div class="price">від $200</div><p>Одна посадкова сторінка для однієї пропозиції: до 7 змістових блоків, проста форма, кнопки зв'язку й якірне меню.</p></div>
+        <div class="service-card"><h4>Сайт-візитка</h4><div class="price">від $300</div><p>До 5 інформаційних сторінок, спільні шапка й підвал, форма, контакти, месенджери та готові матеріали.</p></div>
+        <div class="service-card"><h4>Корпоративний сайт</h4><div class="price">від $450</div><p>До 10 сторінок, до 3 типів компонування, розділи послуг і проєктів, єдина навігація та до 2 простих форм.</p></div>
+        <div class="service-card"><h4>Сайт-каталог</h4><div class="price">від $500</div><p>Категорії й картки без онлайн-оплати: до 5 категорій, 10 демонстраційних товарів, базовий пошук і до 2 фільтрів.</p></div>
+        <div class="service-card"><h4>Інтернет-магазин WooCommerce</h4><div class="price">від $650</div><p>Каталог, кошик, гостьове оформлення, керування замовленнями та стандартні email-сповіщення. Онлайн-оплата й доставка підключаються окремо.</p></div>
+      </div>
+    </article>
+
+    <article class="price-section" id="accounts" data-price-mode="buy" data-project="site">
+      <h3>Особистий кабінет</h3>
+      <p class="section-note">Орієнтири за ставкою $15–20/год. Остаточна оцінка залежить від ролей, прав, дизайну, джерел даних та інтеграцій.</p>
+      <table class="price-table"><thead><tr><th>Рівень</th><th>Приклад обсягу</th><th>Орієнтир</th></tr></thead><tbody>
+        <tr><td>Стандартний WooCommerce</td><td>Вхід, профіль, адреси, власні замовлення без нового дизайну</td><td>$30–80</td></tr>
+        <tr><td>Закритий B2B-розділ</td><td>Групи користувачів і закриті ціни на готовому сумісному модулі</td><td>$120–400</td></tr>
+        <tr><td>Індивідуальний кабінет</td><td>Власні заявки, документи, статуси та ролі без складного зовнішнього обміну</td><td>$300–1 200</td></tr>
+      </tbody></table>
+    </article>
+
+    <article class="price-section" id="integrations" data-price-mode="buy" data-project="site">
+      <h3>Інтеграції та автоматизація</h3>
+      <p class="section-note">Ціни передбачають робочу сумісну платформу, готовий модуль і надані замовником доступи.</p>
+      <table class="price-table"><thead><tr><th>Послуга</th><th>Що входить</th><th>Вартість</th></tr></thead><tbody>
+        <tr><td>Нова пошта</td><td>Один сумісний модуль, вибір міста й відділення, тестове замовлення</td><td>$50</td></tr>
+        <tr><td>Онлайн-оплата</td><td>Один платіжний провайдер через готовий модуль і перевірка тестового замовлення</td><td>$40</td></tr>
+        <tr><td>Додаткові опції товарів</td><td>Колір, розмір, пакування, напис або погоджена доплата за послугу</td><td>від $60</td></tr>
+        <tr><td>Telegram-сповіщення</td><td>Один бот або конектор, один чат і шаблон нового замовлення</td><td>$40</td></tr>
+        <tr><td>Meta Pixel</td><td>Один піксель, базова подія та погоджені стандартні події</td><td>$40</td></tr>
+      </tbody></table>
+    </article>
+
+    <article class="price-section" id="products-price" data-price-mode="buy" data-project="site">
+      <h3>Товари, наповнення та SEO</h3>
+      <table class="price-table"><thead><tr><th>Послуга</th><th>Опис</th><th>Вартість</th></tr></thead><tbody>
+        <tr><td>Імпорт з готової бази</td><td>Структурована база з описами, цінами й зображеннями; тестовий імпорт і погоджене зіставлення полів</td><td>від 10 грн/товар</td></tr>
+        <tr><td>Ручне оформлення картки</td><td>Назва, опис, ціна, категорія, артикул, готові зображення й погоджені характеристики</td><td>від $1.50/товар</td></tr>
+        <tr><td>Базові SEO-налаштування</td><td>Погоджені заголовки, метаописи, карта сайту, індексація й технічні рекомендації</td><td>за оцінкою</td></tr>
+        <tr><td>Щомісячне наповнення</td><td>Публікація готових текстів, зображень, сторінок, товарів або матеріалів у погодженому обсязі</td><td>$40–150/міс.</td></tr>
+        <tr><td>Додаткова робота</td><td>Роботи понад погоджений пакет</td><td>$15–20/год.</td></tr>
+        <tr><td>Термінове виконання</td><td>Застосовується до погодженої вартості відповідних робіт</td><td>коефіцієнт ×2</td></tr>
+      </tbody></table>
+    </article>
+
+    <article class="price-section" id="support">
+      <h3>Щомісячний супровід</h3>
+      <table class="price-table"><thead><tr><th>Пакет</th><th>Для чого</th><th>За місяць</th></tr></thead><tbody>
+        <tr><td>Базова підтримка</td><td>Перевірка доступності й форми, резервування, сумісні оновлення та невеликі виправлення</td><td>$40–65</td></tr>
+        <tr><td>Стандартна підтримка</td><td>Базові роботи плюс погоджені зміни текстів, зображень, контактів і наявних блоків</td><td>$60–80</td></tr>
+        <tr><td>Підтримка магазину</td><td>Оновлення, резервування та перевірка картки, кошика, оформлення й сповіщень</td><td>$90–200</td></tr>
+      </tbody></table>
+    </article>
+
+    <article class="price-section" id="mobile" data-price-mode="buy" data-project="app">
+      <h3>Розробка мобільних застосунків</h3>
+      <p class="section-note">Від оболонки готового адаптивного сайту до індивідуального продукту зі спільною системою керування.</p>
+      <table class="price-table"><thead><tr><th>Формат</th><th>Опис</th><th>Вартість від</th></tr></thead><tbody>
+        <tr><td>Android на базі сайту</td><td>Оболонка готового сайту, базова навігація, іконка, екран запуску та збірка</td><td>$300</td></tr>
+        <tr><td>Android + iOS на базі сайту</td><td>Два застосунки на основі готового адаптивного сайту</td><td>$500</td></tr>
+        <tr><td>Android з індивідуальним інтерфейсом</td><td>Окремі екрани й навігація під Android, підключення до готового API</td><td>$600</td></tr>
+        <tr><td>iOS з індивідуальним інтерфейсом</td><td>Окремий інтерфейс для iPhone, підготовка збірки й перевірка сценаріїв</td><td>$800</td></tr>
+        <tr><td>Android + iOS, єдина кодова база</td><td>Дві платформи на спільній кросплатформній основі</td><td>$1 100</td></tr>
+        <tr><td>Android + iOS + інтернет-магазин</td><td>Каталог, картка, кошик і замовлення зі спільною системою керування</td><td>$1 500</td></tr>
+        <tr><td>Складний індивідуальний застосунок</td><td>Ролі, власна серверна логіка, нестандартні інтеграції та спеціальні сценарії</td><td>$2 500</td></tr>
+      </tbody></table>
+      <h4 style="margin:26px 0 8px;font-size:19px">Додаткові послуги для застосунків</h4>
+      <table class="price-table"><thead><tr><th>Послуга</th><th>Вартість від</th></tr></thead><tbody>
+        <tr><td>Публікація в Google Play</td><td>$50</td></tr><tr><td>Публікація в App Store</td><td>$80</td></tr>
+        <tr><td>Push-сповіщення</td><td>$60</td></tr><tr><td>Онлайн-оплата</td><td>$60</td></tr><tr><td>Доставка</td><td>$60</td></tr>
+        <tr><td>Лояльність і бонуси</td><td>$120</td></tr><tr><td>Міграція клієнтської бази</td><td>$100</td></tr><tr><td>Технічна підтримка</td><td>$30/міс.</td></tr>
+      </tbody></table>
+      <div class="notice" style="margin-top:18px">Проста WebView-оболонка може бути відхилена, особливо в App Store. Публікація не гарантується. Реєстраційні та щорічні збори платформ, комісії магазинів і сторонні сервіси оплачуються окремо.</div>
+    </article>
+
+    <article class="price-section" id="rental" data-price-mode="rent">
+      <h3>Оренда сайтів і застосунків</h3>
+      <p class="section-note">Під час оренди хостинг, код, база, API, резервні копії та системні доступи залишаються під керуванням виконавця. Клієнт отримує лише обмежену панель для контенту, товарів і замовлень. Після повного викупу передаються погоджені активи й повні права доступу. Мінімальний строк — 12 місяців.</p>
+      <div id="rentalSites"><h4 style="margin:0 0 8px;font-size:19px">Сайти</h4>
+      <table class="price-table"><thead><tr><th>Формат</th><th>Запуск</th><th>За місяць</th></tr></thead><tbody>
+        <tr><td>Лендинг</td><td>$30</td><td>$30</td></tr><tr><td>Сайт-візитка</td><td>$40</td><td>$40</td></tr>
+        <tr><td>Корпоративний сайт</td><td>$60</td><td>$60</td></tr><tr><td>Сайт-каталог</td><td>$70</td><td>$70</td></tr>
+        <tr><td>Інтернет-магазин WooCommerce</td><td>$100</td><td>$100</td></tr>
+      </tbody></table></div>
+      <div id="rentalApps"><h4 style="margin:26px 0 8px;font-size:19px">Мобільні застосунки</h4>
+      <table class="price-table"><thead><tr><th>Формат</th><th>Запуск*</th><th>За місяць</th></tr></thead><tbody>
+        <tr><td>Android на базі сайту</td><td>$50</td><td>$40</td></tr><tr><td>Android + iOS на базі сайту</td><td>$150</td><td>$50</td></tr>
+        <tr><td>Android з індивідуальним інтерфейсом</td><td>$50</td><td>$70</td></tr><tr><td>iOS з індивідуальним інтерфейсом</td><td>$120</td><td>$80</td></tr>
+        <tr><td>Android + iOS, єдина кодова база</td><td>$150</td><td>$80</td></tr><tr><td>Android + iOS + інтернет-магазин</td><td>$150</td><td>$110</td></tr>
+        <tr><td>Складний індивідуальний застосунок</td><td>від $150</td><td>від $110</td></tr>
+      </tbody></table></div>
+      <div class="notice" id="rentalBundle" style="margin-top:18px"><strong>Комплект для магазину:</strong> WooCommerce + Android + iOS зі спільною системою керування — запуск $250 і $210/міс. Базові корпоративні акаунти Google Play та Apple Developer включені в оренду. До викупу клієнт отримує лише панель керування контентом, товарами й замовленнями; код, хостинг, база, API, репозиторій, ключі підпису та системні доступи залишаються у виконавця. Після викупу застосунок офіційно переноситься в акаунти клієнта, а погоджені активи й доступи передаються за актом.</div>
+    </article>
+
+    <article class="price-section" id="terms">
+      <h3>Порядок робіт і основні умови</h3>
+      <div class="conditions">
+        <div class="condition"><strong>Оплата 50 / 30 / 20</strong>50% після погодження ТЗ, 30% після демонстрації робочого етапу, 20% після підсумкового приймання.</div>
+        <div class="condition"><strong>Два раунди правок</strong>Один раунд — один узагальнений список у межах погодженого ТЗ. Нові функції оцінюються окремо.</div>
+        <div class="condition"><strong>Гарантія 30 днів</strong>Поширюється на відтворювані помилки розробки та не охоплює нові побажання або сторонні зміни.</div>
+        <div class="condition"><strong>Зовнішні витрати окремо</strong>Домен, хостинг, ліцензії, платні модулі, комісії, підписки та послуги сторонніх платформ.</div>
+        <div class="condition"><strong>Ціна після ТЗ</strong>Усі суми є початковими. Остаточна ціна, строки, валюта й критерії приймання визначаються після погодження обсягу.</div>
+        <div class="condition"><strong>Матеріали й доступи</strong>Замовник надає готові тексти, зображення, політики, акаунти та необхідні доступи у погоджений строк.</div>
+      </div>
+    </article>
+  </section>
+  <footer class="footer">Ціни вказані «від» і не є публічною офертою. Межі пакетів, строки та результат робіт фіксуються в технічному завданні.</footer>
+  <div class="toast" id="toast">Розрахунок скопійовано</div>
+
+  <script>
+    const sites = [
+      ['none','Не потрібен',0,0,0],['landing','Лендинг',200,30,30],['card','Сайт-візитка до 5 сторінок',300,40,40],
+      ['corporate','Корпоративний сайт до 10 сторінок',450,60,60],['catalog','Сайт-каталог',500,70,70],['shop','Інтернет-магазин WooCommerce',650,100,100]
+    ];
+    const apps = [
+      ['none','Не потрібен',0,0,0],['android-web','Android на базі сайту',300,50,40],['both-web','Android + iOS на базі сайту',500,150,50],
+      ['android-custom','Android з індивідуальним інтерфейсом',600,50,70],['ios-custom','iOS з індивідуальним інтерфейсом',800,120,80],
+      ['shared','Android + iOS з єдиною кодовою базою',1100,150,80],['store','Android + iOS + інтернет-магазин',1500,150,110],['complex','Складний індивідуальний застосунок',2500,150,110]
+    ];
+    const accounts = [
+      ['none','Не потрібен',0,0],['woo','Стандартний кабінет WooCommerce',30,80],
+      ['b2b','Закритий B2B-розділ',120,400],['custom','Індивідуальний особистий кабінет',300,1200]
+    ];
+    const webAddons = [
+      ['nova','Нова пошта',50],['payment-web','Онлайн-оплата для сайту',40],['options','Додаткові опції товарів',60],
+      ['telegram','Telegram-сповіщення про замовлення',40],['pixel','Meta Pixel',40]
+    ];
+    const appAddons = [
+      ['play','Публікація в Google Play',50],['appstore','Публікація в App Store',80],['push','Push-сповіщення',60],
+      ['payment-app','Онлайн-оплата в застосунку',60],['delivery-app','Інтеграція доставки',60],['loyalty','Лояльність і бонуси',120],
+      ['migration','Міграція клієнтської бази',100]
+    ];
+    const estimateAddons = [
+      ['seo','Базові SEO-налаштування'],
+      ['architecture','Аудит і модернізація архітектури сайту']
+    ];
+    const supports = [
+      ['none','Без щомісячного супроводу',0,0],['base','Базова підтримка',40,65],
+      ['standard','Стандартна підтримка',60,80],['shop','Підтримка магазину',90,200],['app','Підтримка застосунку',30,30]
+    ];
+    const money = value => '$' + Math.round(value).toLocaleString('uk-UA');
+    const rangeMoney = (min,max,suffix='') => min===max ? `${money(min)}${suffix}` : `${money(min)}–${money(max)}${suffix}`;
+    const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function projectRadios(target, name, items, mode, checked='none') {
+      target.innerHTML = items.map(([id,label,buy,setup,rent]) => {
+        const price = id==='none' ? '—' : mode==='rent' ? `${money(setup)} запуск + ${money(rent)}/міс.` : `від ${money(buy)}`;
+        return `<div class="choice"><input type="radio" name="${name}" id="${name}-${id}" value="${id}" ${id===checked?'checked':''}><label for="${name}-${id}"><span class="choice-title">${esc(label)}</span><span class="choice-price">${price}</span></label></div>`;
+      }).join('');
+    }
+    function supportRadios(target, items, checked='none') {
+      target.innerHTML = items.map(([id,label,min,max]) => `<div class="choice"><input type="radio" name="support" id="support-${id}" value="${id}" ${id===checked?'checked':''}><label for="support-${id}"><span class="choice-title">${esc(label)}</span><span class="choice-price">${min ? rangeMoney(min,max,'/міс.') : '—'}</span></label></div>`).join('');
+    }
+    function accountRadios(target, items, checked='none') {
+      target.innerHTML = items.map(([id,label,min,max]) => `<div class="choice"><input type="radio" name="account" id="account-${id}" value="${id}" ${id===checked?'checked':''}><label for="account-${id}"><span class="choice-title">${esc(label)}</span><span class="choice-price">${min ? rangeMoney(min,max) : '—'}</span></label></div>`).join('');
+    }
+    function checks(target, items) {
+      target.innerHTML = items.map(([id,label,price]) => `<label class="addon"><input type="checkbox" value="${id}"><span>${esc(label)}</span><span class="addon-price">від ${money(price)}</span></label>`).join('');
+    }
+    function estimateChecks(target, items) {
+      target.innerHTML = items.map(([id,label]) => `<label class="addon"><input type="checkbox" value="${id}"><span>${esc(label)}</span><span class="addon-price">за оцінкою</span></label>`).join('');
+    }
+    function renderProjectChoices(mode, site='none', app='none') {
+      projectRadios(document.querySelector('#siteChoices'),'site',sites,mode,site);
+      projectRadios(document.querySelector('#appChoices'),'app',apps,mode,app);
+    }
+    function renderSupportChoices(site,app,checked='none') {
+      const noProject = site==='none' && app==='none';
+      const available = supports.filter(([id]) => noProject || id==='none' || (id==='app' ? app!=='none' : site!=='none'));
+      const valid = available.some(([id]) => id===checked) ? checked : 'none';
+      supportRadios(document.querySelector('#supportChoices'),available,valid);
+    }
+    function updateVisibility() {
+      const data = new FormData(form);
+      const mode = data.get('mode') || 'buy';
+      const site = data.get('site') || 'none';
+      const app = data.get('app') || 'none';
+      const hasSite = site!=='none';
+      const hasApp = app!=='none';
+      document.querySelector('#accountStep').hidden = mode==='rent' || (hasApp && !hasSite);
+      document.querySelector('#extrasStep').hidden = mode==='rent';
+      document.querySelector('#contentStep').hidden = mode==='rent' || (hasApp && !hasSite);
+      document.querySelector('#webAddonGroup').hidden = mode==='rent' || (hasApp && !hasSite);
+      document.querySelector('#appAddonGroup').hidden = mode==='rent' || (hasSite && !hasApp);
+      document.querySelectorAll('[data-price-mode]').forEach(el => {
+        let visible = el.dataset.priceMode===mode;
+        if (visible && (hasSite || hasApp) && el.dataset.project==='site') visible = hasSite;
+        if (visible && (hasSite || hasApp) && el.dataset.project==='app') visible = hasApp;
+        el.hidden = !visible;
+      });
+      document.querySelector('#rentalSites').hidden = mode!=='rent' || (hasApp && !hasSite);
+      document.querySelector('#rentalApps').hidden = mode!=='rent' || (hasSite && !hasApp);
+      document.querySelector('#rentalBundle').hidden = mode!=='rent' || !(site==='shop' && app==='store');
+    }
+    renderProjectChoices('buy');
+    accountRadios(document.querySelector('#accountChoices'),accounts);
+    renderSupportChoices('none','none');
+    checks(document.querySelector('#webAddons'),webAddons);
+    checks(document.querySelector('#appAddons'),appAddons);
+    estimateChecks(document.querySelector('#estimateAddons'),estimateAddons);
+
+    const byId = (items,id) => items.find(x => x[0]===id);
+    const form = document.querySelector('#calculator');
+    function calculate() {
+      const data = new FormData(form);
+      const mode = data.get('mode') || 'buy';
+      const selectedSite = byId(sites, data.get('site'));
+      const selectedApp = byId(apps, data.get('app'));
+      const selectedAccount = byId(accounts, data.get('account'));
+      const selectedSupport = byId(supports, data.get('support'));
+      const hasSite = selectedSite[0]!=='none';
+      const hasApp = selectedApp[0]!=='none';
+      const noProject = !hasSite && !hasApp;
+      let lines = [], usdMin = 0, usdMax = 0, uah = 0, monthlyMin = 0, monthlyMax = 0;
+      const addLine = (label,min,max=min,suffix='',estimate=false) => lines.push({label,min,max,suffix,estimate});
+      const addOnce = (label,min,max=min) => { usdMin += min; usdMax += max; addLine(label,min,max); };
+      const addMonthly = (label,min,max=min) => { monthlyMin += min; monthlyMax += max; addLine(label,min,max,'/міс.'); };
+      const bundle = mode==='rent' && selectedSite[0]==='shop' && selectedApp[0]==='store';
+      if (bundle) {
+        addOnce('Комплект: сайт, акаунти та інфраструктура',250);
+        addMonthly('Оренда комплекту',210);
+      } else if (mode==='rent') {
+        if (selectedSite[3]) { addOnce(selectedSite[1]+' — запуск',selectedSite[3]); addMonthly(selectedSite[1]+' — оренда',selectedSite[4]); }
+        if (selectedApp[3]) { addOnce(selectedApp[1]+' — запуск',selectedApp[3]); addMonthly(selectedApp[1]+' — оренда',selectedApp[4]); }
+      } else {
+        if (selectedSite[2]) addOnce(selectedSite[1],selectedSite[2]);
+        if (selectedApp[2]) addOnce(selectedApp[1],selectedApp[2]);
+      }
+      if (mode==='buy' && (hasSite || noProject) && selectedAccount[2]) addOnce(selectedAccount[1],selectedAccount[2],selectedAccount[3]);
+      const activeAddons = mode==='buy' ? [
+        ...(hasSite || noProject ? webAddons : []),
+        ...(hasApp || noProject ? appAddons : [])
+      ] : [];
+      activeAddons.forEach(item => {
+        const el = form.querySelector(`input[value="${item[0]}"]`);
+        if (el?.checked) addOnce(item[1],item[2]);
+      });
+      const products = Math.max(0, parseInt(document.querySelector('#products').value)||0);
+      const imports = Math.max(0, parseInt(document.querySelector('#imports').value)||0);
+      const extraHours = Math.max(0, parseInt(document.querySelector('#extraHours').value)||0);
+      if (mode==='buy' && (hasSite || noProject)) {
+        if (products) addOnce(`Ручне оформлення товарів × ${products}`,products*1.5);
+        if (imports) { uah = imports*10; addLine(`Імпорт з готової бази × ${imports}`,null,null,'',true); }
+        if (extraHours) addOnce(`Додаткова робота × ${extraHours} год.`,extraHours*15,extraHours*20);
+        estimateAddons.forEach(([id,label]) => {
+          const el = form.querySelector(`input[value="${id}"]`);
+          if (el?.checked) addLine(label,null,null,'',true);
+        });
+        if (document.querySelector('#monthlyContent').checked) addMonthly('Щомісячне наповнення',40,150);
+      }
+      if (selectedSupport[2]) addMonthly(selectedSupport[1],selectedSupport[2],selectedSupport[3]);
+      if (document.querySelector('#urgent').checked && usdMin) {
+        const surchargeMin=usdMin, surchargeMax=usdMax;
+        usdMin *= 2; usdMax *= 2;
+        addLine('Термінове виконання — доплата ×1',surchargeMin,surchargeMax);
+      }
+      document.querySelector('#summaryKicker').textContent = mode==='rent' ? 'Разовий платіж' : 'Орієнтовна вартість';
+      document.querySelector('#total').textContent = rangeMoney(usdMin,usdMax);
+      document.querySelector('#summaryNotice').textContent = mode==='rent'
+        ? 'Під час оренди клієнт отримує лише обмежене адміністрування. Код, хостинг, база, API, репозиторій, ключі підпису та системні доступи залишаються у виконавця до викупу. Базові корпоративні акаунти магазинів включені в оренду; комісії та сторонні сервіси оплачуються окремо.'
+        : 'Це попередній розрахунок. Остаточна вартість визначається після узгодження ТЗ. Домен, хостинг, платні модулі, комісії та збори Google Play і Apple оплачуються окремо. WebView-застосунок може не пройти перевірку магазину.';
+      const uahEl = document.querySelector('#uahTotal');
+      uahEl.hidden = !uah; uahEl.textContent = uah ? `+ від ${uah.toLocaleString('uk-UA')} грн за імпорт` : '';
+      const monthly = document.querySelector('#monthly');
+      monthly.hidden = !monthlyMin;
+      document.querySelector('#monthlyValue').textContent = monthlyMin ? rangeMoney(monthlyMin,monthlyMax,'/міс.') : '';
+      const list = document.querySelector('#breakdown');
+      list.innerHTML = lines.length ? lines.map(line => `<li><span>${esc(line.label)}</span><span>${line.estimate?'за оцінкою':rangeMoney(line.min,line.max,line.suffix)}</span></li>`).join('') : '<li class="empty">Оберіть послуги для розрахунку</li>';
+      return {mode,usdMin,usdMax,uah,lines,monthlyMin,monthlyMax};
+    }
+    form.addEventListener('input', event => {
+      if (event.target.name==='mode') {
+        const site = new FormData(form).get('site') || 'none';
+        const app = new FormData(form).get('app') || 'none';
+        renderProjectChoices(event.target.value,site,app);
+      }
+      if (['mode','site','app'].includes(event.target.name)) {
+        const data = new FormData(form);
+        const selectedSupport = data.get('support') || 'none';
+        renderSupportChoices(data.get('site') || 'none',data.get('app') || 'none',selectedSupport);
+        updateVisibility();
+      }
+      calculate();
+    });
+    document.querySelector('#reset').addEventListener('click', () => { form.reset(); renderProjectChoices('buy'); renderSupportChoices('none','none'); document.querySelector('#products').value=0; document.querySelector('#imports').value=0; document.querySelector('#extraHours').value=0; updateVisibility(); calculate(); });
+    document.querySelector('#copy').addEventListener('click', async () => {
+      const r=calculate();
+      const rows=r.lines.map(line=>`• ${line.label}: ${line.estimate?'за оцінкою':rangeMoney(line.min,line.max,line.suffix)}`).join('\n') || 'Послуги не вибрані';
+      const monthly=r.monthlyMin ? `\nЩомісячно разом: ${rangeMoney(r.monthlyMin,r.monthlyMax)}` : '';
+      const term=r.mode==='rent' ? '\nМінімальний строк оренди: 12 місяців.' : '';
+      const accessNote=r.mode==='rent' ? 'До викупу клієнт отримує обмежене адміністрування; системні доступи та корпоративні акаунти залишаються у виконавця.' : 'Збори платформ і сторонні сервіси оплачуються окремо.';
+      const text=`Попередній розрахунок\nФормат: ${r.mode==='rent'?'оренда':'купівля'}\n${rows}\nРазовий платіж: ${rangeMoney(r.usdMin,r.usdMax)}${r.uah?` + від ${r.uah.toLocaleString('uk-UA')} грн`:''}${monthly}${term}\n\nОстаточна вартість — після погодження ТЗ. ${accessNote}`;
+      try { await navigator.clipboard.writeText(text); } catch { const a=document.createElement('textarea'); a.value=text; document.body.append(a); a.select(); document.execCommand('copy'); a.remove(); }
+      const toast=document.querySelector('#toast'); toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1800);
+    });
+    updateVisibility();
+    calculate();
+  </script>
+</body>
+</html>
