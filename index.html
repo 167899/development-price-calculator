@@ -265,8 +265,8 @@
       <h3>Розробка сайтів</h3>
       <p class="section-note">Адаптивне відображення, погоджений стиль, базова навігація, розміщення готових матеріалів і перевірка основних сценаріїв.</p>
       <div class="service-grid">
-        <div class="service-card"><h4>Лендинг</h4><div class="price">від $200</div><p>Одна посадкова сторінка для однієї пропозиції: до 7 змістових блоків, проста форма, кнопки зв'язку й якірне меню.</p></div>
-        <div class="service-card"><h4>Сайт-візитка</h4><div class="price">від $300</div><p>До 5 інформаційних сторінок, спільні шапка й підвал, форма, контакти, месенджери та готові матеріали.</p></div>
+        <div class="service-card"><h4>Лендинг</h4><div class="price">від $100</div><p>Одна посадкова сторінка для однієї пропозиції: до 7 змістових блоків, проста форма, кнопки зв'язку й якірне меню.</p></div>
+        <div class="service-card"><h4>Сайт-візитка</h4><div class="price">від $200</div><p>До 5 інформаційних сторінок, спільні шапка й підвал, форма, контакти, месенджери та готові матеріали.</p></div>
         <div class="service-card"><h4>Корпоративний сайт</h4><div class="price">від $450</div><p>До 10 сторінок, до 3 типів компонування, розділи послуг і проєктів, єдина навігація та до 2 простих форм.</p></div>
         <div class="service-card"><h4>Сайт-каталог</h4><div class="price">від $500</div><p>Категорії й картки без онлайн-оплати: до 5 категорій, 10 демонстраційних товарів, базовий пошук і до 2 фільтрів.</p></div>
         <div class="service-card"><h4>Інтернет-магазин WooCommerce</h4><div class="price">від $650</div><p>Каталог, кошик, гостьове оформлення, керування замовленнями та стандартні email-сповіщення. Онлайн-оплата й доставка підключаються окремо.</p></div>
@@ -342,7 +342,6 @@
       <p class="section-note">Під час оренди хостинг, код, база, API, резервні копії та системні доступи залишаються під керуванням виконавця. Клієнт отримує лише обмежену панель для контенту, товарів і замовлень. Після повного викупу передаються погоджені активи й повні права доступу. Мінімальний строк — 12 місяців.</p>
       <div id="rentalSites"><h4 style="margin:0 0 8px;font-size:19px">Сайти</h4>
       <table class="price-table"><thead><tr><th>Формат</th><th>Запуск</th><th>За місяць</th></tr></thead><tbody>
-        <tr><td>Лендинг</td><td>$30</td><td>$30</td></tr><tr><td>Сайт-візитка</td><td>$40</td><td>$40</td></tr>
         <tr><td>Корпоративний сайт</td><td>$60</td><td>$60</td></tr><tr><td>Сайт-каталог</td><td>$70</td><td>$70</td></tr>
         <tr><td>Інтернет-магазин WooCommerce</td><td>$100</td><td>$100</td></tr>
       </tbody></table></div>
@@ -373,7 +372,7 @@
 
   <script>
     const sites = [
-      ['none','Не потрібен',0,0,0],['landing','Лендинг',200,30,30],['card','Сайт-візитка до 5 сторінок',300,40,40],
+      ['none','Не потрібен',0,0,0],['landing','Лендинг',100,0,0],['card','Сайт-візитка до 5 сторінок',200,0,0],
       ['corporate','Корпоративний сайт до 10 сторінок',450,60,60],['catalog','Сайт-каталог',500,70,70],['shop','Інтернет-магазин WooCommerce',650,100,100]
     ];
     const apps = [
@@ -406,7 +405,8 @@
     const rangeMoney = (min,max,suffix='') => min===max ? `${money(min)}${suffix}` : `${money(min)}–${money(max)}${suffix}`;
     const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function projectRadios(target, name, items, mode, checked='none') {
-      target.innerHTML = items.map(([id,label,buy,setup,rent]) => {
+      const visibleItems = mode === 'rent' ? items.filter(([id]) => !['landing','card'].includes(id)) : items;
+      target.innerHTML = visibleItems.map(([id,label,buy,setup,rent]) => {
         const price = id==='none' ? '—' : mode==='rent' ? `${money(setup)} запуск + ${money(rent)}/міс.` : `від ${money(buy)}`;
         return `<div class="choice"><input type="radio" name="${name}" id="${name}-${id}" value="${id}" ${id===checked?'checked':''}><label for="${name}-${id}"><span class="choice-title">${esc(label)}</span><span class="choice-price">${price}</span></label></div>`;
       }).join('');
@@ -533,7 +533,8 @@
     }
     form.addEventListener('input', event => {
       if (event.target.name==='mode') {
-        const site = new FormData(form).get('site') || 'none';
+        const currentSite = new FormData(form).get('site') || 'none';
+        const site = event.target.value === 'rent' && ['landing','card'].includes(currentSite) ? 'none' : currentSite;
         const app = new FormData(form).get('app') || 'none';
         renderProjectChoices(event.target.value,site,app);
       }
